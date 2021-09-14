@@ -1,0 +1,17 @@
+YieArVideo revision history
+-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
+V0.1.5 - 2021-03-04 (FluBBa)
+	Added load/save state.
+
+V0.1.0 - 2021-02-13 (FluBBa)
+	Fixed and optimised most stuff.
+	Works on the GBA.
+
+V0.0.2 - 2019-08-01 (FluBBa)
+	Started NDS version.
+
+V0.0.1 - 2009-03-23 (FluBBa)
+	Started first GBA version.
+
