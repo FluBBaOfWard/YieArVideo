@@ -3,7 +3,7 @@ Yie Ar Kung-Fu video chip emulator for GBA/NDS.
 
 ## How to use
 
-First alloc chip struct, call init with chip type.
+First alloc chip struct, call init with decoder buffer.
 
 ## Projects that use this code
 
@@ -16,4 +16,4 @@ Fredrik Ahlström
 
 X/Twitter @TheRealFluBBa
 
-https://www.github.com/FluBBaOfWard
+<https://www.github.com/FluBBaOfWard>

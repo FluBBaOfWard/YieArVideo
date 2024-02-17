@@ -9,9 +9,9 @@
 #ifndef YIEARVIDEO_HEADER
 #define YIEARVIDEO_HEADER
 
-/** \brief  Game screen height in pixels */
+/** Game screen height in pixels */
 #define GAME_HEIGHT (224)
-/** \brief  Game screen width in pixels */
+/** Game screen width in pixels */
 #define GAME_WIDTH  (256)
 
 typedef struct {
@@ -34,7 +34,13 @@ typedef struct {
 	u32 *sprBlockLUT;
 } YieArVideo;
 
-void yieArReset(void *periodicIrqFunc(), void *frameIrqFunc(), u8 *ram);
+/**
+ * Initializes the tile decoder.
+ * @param  *chrDecode: Pointer to a 0x400 large byte buffer.
+ */
+void yiearInit(u8 *chrDecode);
+
+void yiearReset(void *periodicIrqFunc(), void *frameIrqFunc(), u8 *ram);
 
 /**
  * Saves the state of the YieArVideo chip to the destination.
@@ -42,7 +48,7 @@ void yieArReset(void *periodicIrqFunc(), void *frameIrqFunc(), u8 *ram);
  * @param  *chip: The YieArVideo chip to save.
  * @return The size of the state.
  */
-int yiearSaveState(void *destination, YieArVideo *chip);
+int yiearSaveState(void *destination, const YieArVideo *chip);
 
 /**
  * Loads the state of the YieArVideo chip from the source.
@@ -50,7 +56,7 @@ int yiearSaveState(void *destination, YieArVideo *chip);
  * @param  *source: Where to load the state from.
  * @return The size of the state.
  */
-int yiearLoadState(const void *source, const YieArVideo *chip);
+int yiearLoadState(YieArVideo *chip, const void *source);
 
 /**
  * Gets the state size of a YieArVideo chip.
@@ -58,8 +64,8 @@ int yiearLoadState(const void *source, const YieArVideo *chip);
  */
 int yiearGetStateSize(void);
 
-void convertTileMapYieAr(void *destination, const void *source, int length);
-void convertSpritesYieAr(void *destination);
-void doScanline(void);
+void yiearConvertTileMap(void *destination, const void *source, int length);
+void yiearConvertSprites(void *destination);
+void yiearDoScanline(void);
 
 #endif // YIEARVIDEO_HEADER

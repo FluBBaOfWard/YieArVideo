@@ -10,9 +10,9 @@
 	#error This header file is only for use in assembly files!
 #endif
 
-/** \brief  Game screen height in pixels */
+/** Game screen height in pixels */
 #define GAME_HEIGHT (224)
-/** \brief  Game screen width in pixels */
+/** Game screen width in pixels */
 #define GAME_WIDTH  (256)
 
 	.equ SPRSRCTILECOUNTBITS,	9
@@ -24,7 +24,7 @@
 	koptr		.req r12
 						;@ YieArVideo.s
 	.struct 0
-scanline:		.long 0			;@ These 3 must be first in state.
+scanline:		.long 0			;@ These 3 must be first.
 nextLineChange:	.long 0
 lineState:		.long 0
 

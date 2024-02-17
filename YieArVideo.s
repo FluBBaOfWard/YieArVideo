@@ -16,18 +16,18 @@
 #include "../Shared/EmuSettings.h"
 #include "YieArVideo.i"
 
-	.global yieArInit
-	.global yieArReset
+	.global yiearInit
+	.global yiearReset
 	.global yiearSaveState
 	.global yiearLoadState
 	.global yiearGetStateSize
-	.global convertTilesYieAr
-	.global doScanline
-	.global convertTileMapYieAr
-	.global convertSpritesYieAr
-	.global yieArRam_R
-	.global yieArRam_W
-	.global yieAr_W
+	.global yiearConvertTiles
+	.global yiearDoScanline
+	.global yiearConvertTileMap
+	.global yiearConvertSprites
+	.global yiearRamR
+	.global yiearRamW
+	.global yiearW
 
 
 	.syntax unified
@@ -36,10 +36,12 @@
 	.section .text
 	.align 2
 ;@----------------------------------------------------------------------------
-yieArInit:		;@ Only need to be called once
+yiearInit:		;@ r0=pointer to 0x400 long buffer
+				;@ Only need to be called once
 ;@----------------------------------------------------------------------------
-	ldr r0,=CHR_DECODE			;@ Build chr decode tbl
-	mov r1,#0xffffff00			;@ 0x400
+	ldr r1,=tileDecoderPtr
+	str r0,[r1]
+	mov r1,#0xffffff00			;@ Build chr decode tbl 0x400
 ppi:
 	movs r2,r1,lsl#31
 	movne r2,#0x2000
@@ -59,7 +61,7 @@ ppi:
 
 	bx lr
 ;@----------------------------------------------------------------------------
-yieArReset:		;@ r0=NMI(periodicIrqFunc), r1=IRQ(frameIrqFunc), r2=ram
+yiearReset:		;@ r0=NMI(periodicIrqFunc), r1=IRQ(frameIrqFunc), r2=ram
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0-r2,lr}
 
@@ -135,7 +137,7 @@ yiearLoadState:				;@ In r0=koptr, r1=source. Out r0=state size.
 
 	ldmfd sp!,{r4,r5,lr}
 ;@----------------------------------------------------------------------------
-yiearGetStateSize:		;@ Out r0=state size.
+yiearGetStateSize:			;@ Out r0=state size.
 	.type   yiearGetStateSize STT_FUNC
 ;@----------------------------------------------------------------------------
 	ldr r0,=0x1004
@@ -147,14 +149,14 @@ yiearGetStateSize:		;@ Out r0=state size.
 	.align 2
 #endif
 ;@----------------------------------------------------------------------------
-convertTilesYieAr:			;@ r0 = destination, r1 = source.
+yiearConvertTiles:			;@ r0 = destination, r1 = source.
 ;@----------------------------------------------------------------------------
 								;@ r1 = bitplane 0 & 1
 	add r2,r1,#0x2000			;@ r2 = bitplane 2 & 3
 	mov r3,#0x200				;@ 512 tiles
 	b convertTiles
 ;@----------------------------------------------------------------------------
-convertTileMapYieAr:		;@ r0 = destination
+yiearConvertTileMap:		;@ r0 = destination
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r3-r6,lr}
 
@@ -227,7 +229,7 @@ executeScanline:
 	bx r0
 	ldmfd sp!,{lr}
 ;@----------------------------------------------------------------------------
-doScanline:
+yiearDoScanline:
 ;@----------------------------------------------------------------------------
 	ldmia koptr,{r1,r2}			;@ Read scanLine & nextLineChange
 	cmp r1,r2
@@ -250,7 +252,7 @@ checkScanlineIRQ:
 	ldmfd sp!,{pc}
 
 ;@----------------------------------------------------------------------------
-yieArRam_R:					;@ Ram read (0x5000-0x5FFF)
+yiearRamR:					;@ Ram read (0x5000-0x5FFF)
 ;@----------------------------------------------------------------------------
 	bic r1,r1,#0xFF000
 	ldr r2,[koptr,#gfxRAM]
@@ -258,7 +260,7 @@ yieArRam_R:					;@ Ram read (0x5000-0x5FFF)
 	bx lr
 
 ;@----------------------------------------------------------------------------
-yieArRam_W:					;@ Ram write (0x5000-0x5FFF)
+yiearRamW:					;@ Ram write (0x5000-0x5FFF)
 ;@----------------------------------------------------------------------------
 	bic r1,r1,#0xFF000
 	ldr r2,[koptr,#gfxRAM]
@@ -266,7 +268,7 @@ yieArRam_W:					;@ Ram write (0x5000-0x5FFF)
 	bx lr
 
 ;@----------------------------------------------------------------------------
-yieAr_W:					;@ I/O write (0x4000)
+yiearW:						;@ I/O write (0x4000)
 ;@----------------------------------------------------------------------------
 ;@	mov r11,r11					;@ No$GBA breakpoint
 	stmfd sp!,{r4,lr}
@@ -325,7 +327,7 @@ reloadSprites:
 ;@----------------------------------------------------------------------------
 	.equ PRIORITY,	0x800		;@ 0x800=AGB OBJ priority 2
 ;@----------------------------------------------------------------------------
-convertSpritesYieAr:		;@ in r0 = destination.
+yiearConvertSprites:		;@ in r0 = destination.
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r10,lr}
 
@@ -430,7 +432,7 @@ do16:
 convertTiles:			;@ r0=dest, r1=src bp0&1, r2=src bp2&3, r3=tileCount.
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r6,lr}
-	ldr r4,=CHR_DECODE
+	ldr r4,tileDecoderPtr
 spr1:
 	ldrb r5,[r1,#8]				;@ Read 1st & 2nd plane, right half.
 	ldrb r6,[r2,#8]				;@ Read 3rd & 4th plane, right half.
@@ -455,18 +457,8 @@ spr1:
 	bne spr1
 
 	ldmfd sp!,{r4-r6,pc}
-;@----------------------------------------------------------------------------
-
-#ifdef GBA
-	.section .sbss				;@ For the GBA
-#else
-	.section .bss
-#endif
-	.align 2
-;@----------------------------------------------------------------------------
-CHR_DECODE:
-	.space 0x400
-
+tileDecoderPtr:
+	.long 0
 ;@----------------------------------------------------------------------------
 	.end
 #endif // #ifdef __arm__
