@@ -1,5 +1,14 @@
-;@ ASM header for the Konami YieArVideo emulator
 ;@
+;@  YieArVideo.s
+;@  Konami YieAr Video Chip emulator for GBA/NDS.
+;@
+;@  Created by Fredrik Ahlström on 2009-03-23.
+;@  Copyright © 2009-2024 Fredrik Ahlström. All rights reserved.
+;@
+
+#if !__ASSEMBLER__
+	#error This header file is only for use in assembly files!
+#endif
 
 /** \brief  Game screen height in pixels */
 #define GAME_HEIGHT (224)

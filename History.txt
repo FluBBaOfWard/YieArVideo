@@ -2,6 +2,9 @@ YieArVideo revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 
+V0.1.6 - 2024-02-17 (FluBBa)
+	Optimized initialization.
+
 V0.1.5 - 2021-03-04 (FluBBa)
 	Added load/save state.
 

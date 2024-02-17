@@ -1,4 +1,10 @@
-// Konami Yie Ar Video Chip emulation
+//
+//  YieArVideo.h
+//  Konami Yie Ar Video Chip emulator for GBA/NDS.
+//
+//  Created by Fredrik Ahlström on 2009-08-25.
+//  Copyright © 2009-2024 Fredrik Ahlström. All rights reserved.
+//
 
 #ifndef YIEARVIDEO_HEADER
 #define YIEARVIDEO_HEADER

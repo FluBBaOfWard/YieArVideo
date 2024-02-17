@@ -1,4 +1,10 @@
-// Konami YieAr Video Chip emulation
+;@
+;@  YieArVideo.s
+;@  Konami YieAr Video Chip emulator for GBA/NDS.
+;@
+;@  Created by Fredrik Ahlström on 2009-03-23.
+;@  Copyright © 2009-2024 Fredrik Ahlström. All rights reserved.
+;@
 
 #ifdef __arm__
 
@@ -32,26 +38,22 @@
 ;@----------------------------------------------------------------------------
 yieArInit:		;@ Only need to be called once
 ;@----------------------------------------------------------------------------
-	mov r1,#0xffffff00			;@ Build chr decode tbl
-	ldr r2,=CHR_DECODE			;@ 0x400
+	ldr r0,=CHR_DECODE			;@ Build chr decode tbl
+	mov r1,#0xffffff00			;@ 0x400
 ppi:
-	ands r0,r1,#0x01
-	movne r0,#0x10000000
-	tst r1,#0x02
-	orrne r0,r0,#0x01000000
-	tst r1,#0x04
-	orrne r0,r0,#0x00100000
-	tst r1,#0x08
-	orrne r0,r0,#0x00010000
-	tst r1,#0x10
-	orrne r0,r0,#0x00001000
-	tst r1,#0x20
-	orrne r0,r0,#0x00000100
-	tst r1,#0x40
-	orrne r0,r0,#0x00000010
-	tst r1,#0x80
-	orrne r0,r0,#0x00000001
-	str r0,[r2],#4
+	movs r2,r1,lsl#31
+	movne r2,#0x2000
+	orrcs r2,r2,#0x0200
+	tst r1,r1,lsl#29
+	orrmi r2,r2,#0x0020
+	orrcs r2,r2,#0x0002
+	tst r1,r1,lsl#27
+	orrmi r2,r2,#0x1000
+	orrcs r2,r2,#0x0100
+	tst r1,r1,lsl#25
+	orrmi r2,r2,#0x0010
+	orrcs r2,r2,#0x0001
+	str r2,[r0],#4
 	adds r1,r1,#1
 	bne ppi
 
@@ -142,41 +144,10 @@ yiearGetStateSize:		;@ Out r0=state size.
 ;@----------------------------------------------------------------------------
 convertTilesYieAr:			;@ r0 = destination, r1 = source.
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r8}
-	mov r3,r1					;@ r3 = bitplane 0 & 1
-	add r4,r3,#0x2000			;@ r4 = bitplane 2 & 3
-	ldr r2,=CHR_DECODE
-	mov r5,#0x1000
-bgChr1:
-	ldrb r6,[r3,#8]				;@ Read 1st & 2nd plane, right half.
-	ldrb r8,[r3],#1				;@ Read 1st & 2nd plane, left half.
-	ldrb r7,[r4,#8]				;@ Read 3rd & 4th plane, right half.
-	ldrb r1,[r4],#1				;@ Read 3rd & 4th plane, left half.
-	ldr r8,[r2,r8,lsl#2]
-	ldr r1,[r2,r1,lsl#2]
-	orr r8,r1,r8,lsl#2
-	ldr r6,[r2,r6,lsl#2]
-	ldr r7,[r2,r7,lsl#2]
-	orr r6,r7,r6,lsl#2
-
-	orr r8,r8,r8,lsr#15
-	orr r6,r6,r6,lsr#15
-	mov r8,r8,lsl#16
-	mov r6,r6,lsl#16
-	orr r8,r6,r8,lsr#16
-
-	str r8,[r0],#4
-
-	sub r5,r5,#1
-	tst r5,#0x07
-	addeq r3,r3,#0x08
-	addeq r4,r4,#0x08
-	cmp r5,#0x00
-	bne bgChr1
-
-	ldmfd sp!,{r4-r8}
-	bx lr
-
+								;@ r1 = bitplane 0 & 1
+	add r2,r1,#0x2000			;@ r2 = bitplane 2 & 3
+	mov r3,#0x200				;@ 512 tiles
+	b convertTiles
 ;@----------------------------------------------------------------------------
 #ifdef GBA
 	.section .ewram,"ax"
@@ -356,9 +327,9 @@ reloadSprites:
 ;@----------------------------------------------------------------------------
 convertSpritesYieAr:		;@ in r0 = destination.
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r11,lr}
+	stmfd sp!,{r4-r10,lr}
 
-	mov r11,r0					;@ Destination
+	mov r4,r0					;@ Destination
 
 	ldr r9,[koptr,#sprBlockLUT]
 	ldrb r0,[koptr,#sprMemReload]
@@ -371,8 +342,6 @@ convertSpritesYieAr:		;@ in r0 = destination.
 	ldrb r7,[r7]
 	cmp r7,#UNSCALED			;@ Do autoscroll
 	ldreq r7,=0x01000000		;@ No scaling
-//	ldrne r7,=0x00DB6DB6		;@ 192/224, 6/7, scaling. 0xC0000000/0xE0 = 0x00DB6DB6.
-//	ldrne r7,=0x00B6DB6D		;@ 160/224, 5/7, scaling. 0xA0000000/0xE0 = 0x00B6DB6D.
 	ldrne r7,=(SCREEN_HEIGHT<<19)/(GAME_HEIGHT>>5)		;@ 192/224, 6/7, scaling. 0xC0000000/0xE0 = 0x00DB6DB6.
 	ldreq r6,=yStart			;@ First scanline?
 	ldrbeq r6,[r6]
@@ -392,8 +361,8 @@ convertSpritesYieAr:		;@ in r0 = destination.
 //	add r10,r10,r8,lsl#1		;@ Begin with the last sprite
 dm5:
 	add r2,r10,#0x400
-	ldrh r4,[r10],#2			;@ YieAr OBJ0, r4=Attrib,Ypos.
-	sub r0,r6,r4,lsr#8			;@ Mask Y
+	ldrh r3,[r10],#2			;@ YieAr OBJ0, r3=Attrib,Ypos.
+	sub r0,r6,r3,lsr#8			;@ Mask Y
 	cmp r0,#GAME_HEIGHT
 	beq dm10					;@ Skip if sprite Y=0xF8, 0xF7?
 	subpl r0,r0,#0x100			;@ Make ypos > 0xF8 negative.
@@ -407,85 +376,92 @@ dm5:
 	eor r0,r5,r0,lsr#24			;@ Size + scaling
 	orr r0,r0,r2,lsl#16
 
-	orr r4,r1,r4,lsl#16
+	orr r3,r1,r3,lsl#16
 
-	and r1,r4,#0x00C00000		;@ X/Yflip
+	and r1,r3,#0x00C00000		;@ X/Yflip
 	eor r0,r0,r1,lsl#6
-	str r0,[r11],#4				;@ Store OBJ Atr 0,1. Xpos, ypos, flip, scale/rot, size, shape.
+	str r0,[r4],#4				;@ Store OBJ Atr 0,1. Xpos, ypos, flip, scale/rot, size, shape.
 
-	mov r1,r4,lsl#15
+	mov r1,r3,lsl#15
 	mov r1,r1,lsr#23
 	ldr r0,[r9,r1,lsl#2]		;@ Look up pattern conversion
 	movs r0,r0,lsl#2
 	blcs VRAM_spr_16			;@ Jump to spr copy, takes tile# in r1, gives new tile# in r0
 ret01:
 	orr r0,r0,#PRIORITY			;@ Priority
-	strh r0,[r11],#4			;@ Store OBJ Atr 2. Pattern, prio & palette.
+	strh r0,[r4],#4				;@ Store OBJ Atr 2. Pattern, prio & palette.
 dm9:
 	subs r8,r8,#1
 	bne dm5
-	ldmfd sp!,{r4-r11,pc}
+	ldmfd sp!,{r4-r10,pc}
 dm10:
 	mov r0,#0x200+SCREEN_HEIGHT	;@ Double, y=SCREEN_HEIGHT
-	str r0,[r11],#8
+	str r0,[r4],#8
 	b dm9
 
 ;@----------------------------------------------------------------------------
 spriteCacheFull:
-	strb r2,[koptr,#sprMemReload]
-	ldmfd sp!,{r4-r11,pc}
+	strb r0,[koptr,#sprMemReload]
+	ldmfd sp!,{r4-r10,pc}
 ;@----------------------------------------------------------------------------
 VRAM_spr_16:			;@ Takes tilenumber in r1, returns new tilenumber in r0
 ;@----------------------------------------------------------------------------
-	ldr r2,[koptr,#sprMemAlloc]
-	subs r2,r2,#1
+	ldr r0,[koptr,#sprMemAlloc]
+	subs r0,r0,#1
 	bmi spriteCacheFull
-	str r2,[koptr,#sprMemAlloc]
+	str r0,[koptr,#sprMemAlloc]
 
-	str r2,[r9,r1,lsl#2]
-	mov r0,r2,lsl#2
+	str r0,[r9,r1,lsl#2]
+	mov r0,r0,lsl#2
 
 ;@----------------------------------------------------------------------------
 do16:
-	stmfd sp!,{r0-r6,lr}
-	ldr r6,=CHR_DECODE
-	ldr r3,[koptr,#spriteRomBase]	;@ r3 = bitplane 0 & 1
-	ldr r5,=SPRITE_GFX			;@ r6=SPR tileset
-	add r5,r5,r0,lsl#5			;@
-	add r3,r3,r1,lsl#6			;@ id x 64
-	add r4,r3,#0x8000			;@ r4 = bitplane 2 & 3
+	stmfd sp!,{r0,lr}
+	ldr r2,=SPRITE_GFX			;@ r4=SPR tileset
+	ldr r3,[koptr,#spriteRomBase]
+	add r0,r2,r0,lsl#5			;@
+	add r1,r3,r1,lsl#6			;@ id x 64, r1 = bitplane 0 & 1
+	add r2,r1,#0x8000			;@ r2 = bitplane 2 & 3
+	mov r3,#4					;@ Allways 1 16x16 tiles
+	bl convertTiles
+	ldmfd sp!,{r0,pc}
 
+;@----------------------------------------------------------------------------
+convertTiles:			;@ r0=dest, r1=src bp0&1, r2=src bp2&3, r3=tileCount.
+;@----------------------------------------------------------------------------
+	stmfd sp!,{r4-r6,lr}
+	ldr r4,=CHR_DECODE
 spr1:
-	ldrb r0,[r3,#8]				;@ Read 1st & 2nd plane, right half.
-	ldrb r1,[r4,#8]				;@ Read 3rd & 4th plane, right half.
-	ldr r0,[r6,r0,lsl#2]
-	ldr r1,[r6,r1,lsl#2]
-	orr r2,r1,r0,lsl#2
+	ldrb r5,[r1,#8]				;@ Read 1st & 2nd plane, right half.
+	ldrb r6,[r2,#8]				;@ Read 3rd & 4th plane, right half.
+	ldr r5,[r4,r5,lsl#2]
+	ldr r6,[r4,r6,lsl#2]
+	orr lr,r6,r5,lsl#2
 
-	ldrb r0,[r3],#1				;@ Read 1st & 2nd plane, left half.
-	ldrb r1,[r4],#1				;@ Read 3rd & 4th plane, left half.
-	ldr r0,[r6,r0,lsl#2]
-	ldr r1,[r6,r1,lsl#2]
-	orr r0,r1,r0,lsl#2
+	ldrb r5,[r1],#1				;@ Read 1st & 2nd plane, left half.
+	ldrb r6,[r2],#1				;@ Read 3rd & 4th plane, left half.
+	ldr r5,[r4,r5,lsl#2]
+	ldr r6,[r4,r6,lsl#2]
+	orr r5,r6,r5,lsl#2
 
-	orr r0,r0,r0,lsr#15
-	orr r2,r2,r2,lsr#15
-	mov r0,r0,lsl#16
-	mov r2,r2,lsl#16
-	orr r0,r2,r0,lsr#16
-	str r0,[r5],#4
+	orr r5,r5,lr,lsl#16
+	str r5,[r0],#4
 
-	tst r5,#0x1C
+	tst r0,#0x1C
 	bne spr1
-	addeq r3,r3,#0x08
-	addeq r4,r4,#0x08
-	tst r5,#0x60				;@ Allways 1 16x16 tiles
+	addeq r1,r1,#0x08
+	addeq r2,r2,#0x08
+	subs r3,r3,#1
 	bne spr1
 
-	ldmfd sp!,{r0-r6,pc}
+	ldmfd sp!,{r4-r6,pc}
 ;@----------------------------------------------------------------------------
 
-	.section .ewram,"ax"
+#ifdef GBA
+	.section .sbss				;@ For the GBA
+#else
+	.section .bss
+#endif
 	.align 2
 ;@----------------------------------------------------------------------------
 CHR_DECODE:
