@@ -9,10 +9,12 @@
 #ifndef YIEARVIDEO_HEADER
 #define YIEARVIDEO_HEADER
 
-/** Game screen height in pixels */
-#define GAME_HEIGHT (224)
 /** Game screen width in pixels */
 #define GAME_WIDTH  (256)
+/** Game screen height in pixels */
+#define GAME_HEIGHT (224)
+/** Total horizontal pixel count */
+#define H_PIXEL_COUNT (384)
 
 typedef struct {
 	u32 scanline;

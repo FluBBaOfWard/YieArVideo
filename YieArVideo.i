@@ -10,10 +10,12 @@
 	#error This header file is only for use in assembly files!
 #endif
 
-/** Game screen height in pixels */
-#define GAME_HEIGHT (224)
 /** Game screen width in pixels */
 #define GAME_WIDTH  (256)
+/** Game screen height in pixels */
+#define GAME_HEIGHT (224)
+/** Total horizontal pixel count */
+#define H_PIXEL_COUNT (384)
 
 	.equ SPRSRCTILECOUNTBITS,	9
 	.equ SPRDSTTILECOUNTBITS,	8
