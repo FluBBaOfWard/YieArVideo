@@ -145,7 +145,7 @@ yiearGetStateSize:			;@ Out r0=state size.
 
 ;@----------------------------------------------------------------------------
 #ifdef GBA
-	.section .ewram,"ax"
+	.section .ewram,"ax", %progbits
 	.align 2
 #endif
 ;@----------------------------------------------------------------------------
@@ -213,7 +213,7 @@ lineStateTable:
 	.long 264, frameEndHook		;@ totalScanlines
 ;@----------------------------------------------------------------------------
 #ifdef NDS
-	.section .itcm						;@ For the NDS ARM9
+	.section .itcm, "ax", %progbits		;@ For the NDS ARM9
 #elif GBA
 	.section .iwram, "ax", %progbits	;@ For the GBA
 #endif
