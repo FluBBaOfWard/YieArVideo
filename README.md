@@ -8,13 +8,15 @@ First alloc chip struct, call init with decoder buffer.
 
 ## Projects that use this code
 
-* <https://github.com/FluBBaOfWard/YieArDS>
+* <https://github.com/FluBBaOfWard/K80DS>
 * <https://github.com/FluBBaOfWard/YieArGBA>
 
 ## Credits
 
 Fredrik Ahlström
 
-X/Twitter @TheRealFluBBa
+<https://bsky.app/profile/therealflubba.bsky.social>
 
 <https://www.github.com/FluBBaOfWard>
+
+X/Twitter @TheRealFluBBa
